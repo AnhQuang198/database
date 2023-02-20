@@ -1,0 +1,235 @@
+//schema public, users, shops, products, commons
+
+//Table City
+Table public.city {
+  id int [pk, increment, not null] // auto-increment
+  city_name varchar(100) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table District
+Table public.district {
+  id int [pk, increment, not null] // auto-increment
+  city_id int [not null]
+  full_address varchar(200)
+  district_name varchar(100) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Ward
+Table public.ward {
+  id int [pk, increment, not null] // auto-increment
+  district_id int [not null]
+  full_address varchar(200)
+  ward_name varchar(100) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Category
+Table public.category {
+  id bigint [pk, increment, not null] // auto-increment
+  name varchar(45)
+  image_url varchar(100)
+  tree_path varchar(50) [note: 'path level vd: 1,3,5']
+  level int [note: 'level of category']
+  parent_id int [note: 'id parent of category']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table User
+Table users.user {
+  id bigint [pk, increment, not null] // auto-increment
+  phone varchar(15) [unique]
+  email varchar(50) [not null, unique]
+  password_crypt varchar(100)
+  state ENUM('ACTIVE', 'NOT_ACTIVE') [default: 'NOT_ACTIVE', note: 'status of user']
+  role ENUM('ADMIN', 'MEMBER', 'SELLER') [default: 'MEMBER']
+  is_locked boolean [default: false]
+  provider ENUM('LOCAL', 'GOOGLE', 'FACEBOOK', 'GITHUB') [default: 'LOCAL', note: 'user login oauth or local']
+  name varchar(45)
+  gender tinyint(1)
+  dob varchar(45) [note: 'date of birth']
+  avatar_url varchar(100)
+  confirmed_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table User Address
+Table users.user_adress {
+  id bigint [pk, increment, not null] // auto-increment
+  user_id bigint [not null]
+  full_name varchar(100) [not null]
+  phone varchar(15) [not null]
+  city_id int [not null]
+  district_id int [not null]
+  ward_id int [not null]
+  add_detail varchar(300)
+  type ENUM('OFFICE', 'HOME') [default: 'HOME']
+  is_default boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Shop
+Table shops.shop {
+  id bigint [pk, not null, note: 'map with userId (1 user - 1 shop)']
+  shop_name varchar(45) [not null]
+  avatar_url varchar(100)
+  cover_url varchar(100)
+  category_id bigint [not null, note: 'id trong bảng danh mục (Id ngành hàng)']
+  industry_name varchar(100) [note: 'tên ngành hàng của shop']
+  description tinytext
+  is_locked boolean [default: false]
+  type ENUM('NORMAL', 'FAVORITE', 'MALL') [default: 'NORMAL', note: 'các loại Shop, mặc định tạo nếu ko có giấy tờ là NORMAL']
+  state ENUM('PENDING', 'APPROVED', 'REJECTED') [default: 'PENDING']
+  confirmed_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Shop License
+Table shops.shop_license {
+  id bigint [pk, increment, not null] // auto-increment
+  shop_id bigint [not null]
+  front_identity_card_url varchar(100)
+  back_identity_card_url varchar(100)
+  owner_name varchar(100) [not null, note: 'Tên chủ đăng ký kinh doanh']
+  identity_number varchar(50) [not null, note: 'số CCCD chủ đăng ký']
+  identity_release_date varchar(100) [not null, note:'ngày cấp CCCD']
+  business_license_url varchar(100) [note: 'giấy phép đăng ký kinh doanh']
+  tax_code varchar(50) [note: 'mã số thuế']
+  company_name varchar(100) [note: 'tên công ty đăng ký kinh doanh']
+  state ENUM('PENDING', 'APPROVED', 'REJECTED') [default: 'PENDING']
+  reject_reason tinytext [note: 'lý do từ chối (nếu có)']
+  confirmed_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Shop Address
+Table shops.shop_address {
+  id bigint [pk, increment, not null] // auto-increment
+  shop_id bigint [not null]
+  city_id int [not null]
+  ward_id int [not null]
+  district_id int [not null]
+  add_detail varchar(300) [not null, note: 'Address detail']
+  type ENUM('WAREHOUSE', 'STORE') [not null, default: 'STORE', note: 'STORE: cửa hàng, PICKUP: lấy hàng, WAREHOUSE: kho hàng']
+  is_pickup boolean [default: false, note: 'là địa chỉ lấy hàng (1 shop phải có 1 địa chỉ lấy hàng)']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Payment
+Table users.payment {
+  id bigint [pk, increment, not null] // auto-increment
+  object_id bigint [not null, note: 'user_id or shop_id']
+  type ENUM('CARD', 'BANK') [note: 'CARD:Thẻ tín dụng/Ghi nợ, BANK: tài khoản ngân hàng']
+  account_no varchar(20) [note: 'Số tài khoản']
+  account_holder varchar(50) [note: 'Tên chủ tài khoản']
+  bank_name varchar(50) [note: 'Tên ngân hàng']
+  bank_branch_name varchar(200) [note: 'Chi nhánh ngân hàng']
+  state ENUM('PENDING', 'VERIFIED') [default: 'PENDING', note: 'PENDING: chờ xác minh, VERIFIED: đã xác minh']
+  is_default boolean [default: false, note: 'TK thanh toán mặc định (1 tài khoản phải có 1 loại thanh toán mặc định']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Rating
+Table commons.rating {
+  id bigint [pk, increment, not null] // auto-increment
+  shop_id bigint [note: 'id của shop chứa sản phẩm']
+  product_id bigint [not null, note: 'id của sản phẩm được rate']
+  user_id bigint [not null, note: 'id người dánh giá']
+  rate_star int [not null, note: 'số sao rate cho sản phẩm']
+  is_reported boolean [default: false, note: 'đánh giá bị báo cáo']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Rating detail
+Table commons.rating_detail {
+  id bigint [pk, increment, not null] // auto-increment
+  rating_id bigint [not null, note: 'id rating']
+  comment tinytext [note: 'đánh giá chi tiết']
+  image_urls tinytext [note: 'danh sách ảnh']
+  parent_id int [note: 'id comment của rating_detail cha']
+  level int [note: 'cấp của comment']
+  tree_path varchar(50) [note: 'path level']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Rating total
+Table commons.rating_total {
+  id bigint [pk, increment, not null] // auto-increment
+  shop_id bigint [note: 'id của shop chứa sản phẩm']
+  product_id bigint [not null, note: 'id của sản phẩm được rate']
+  rate_star_avg float [not null]
+  total_five_star int [default: 0]
+  total_four_star int [default: 0]
+  total_three_star int [default: 0]
+  total_two_star int [default: 0]
+  total_one_star int [default: 0]
+  total_comment int [default: 0]
+  total_comment_with_img int [default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Rating reported
+Table commons.rating_report {
+  id bigint [pk, increment, not null] // auto-increment
+  rating_id bigint [not null]
+  message_config_id int
+  message_content varchar(200)
+  state ENUM('PENDING', 'VERIFIED') [default: 'PENDING', note: 'PENDING: chờ xác minh, VERIFIED: đã xác minh']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table Config message (Chứa cấu hình những message mặc định)
+Table commons.message_config {
+  id int [pk, increment, not null] // auto-increment
+  message varchar(200) [not null]
+  type ENUM('RATING_REPORT')
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+
+// Creating references
+// You can also define relaionship separately
+// > many-to-one; < one-to-many; - one-to-one; <> many-to-many
+Ref: users.user.id - shops.shop.id
+
+Ref: users.payment.object_id > users.user.id
+
+Ref: users.payment.object_id > shops.shop.id
+
+Ref: users.user_adress.user_id > users.user.id 
+
+Ref: shops.shop_address.shop_id > shops.shop.id
+
+Ref: public.district.city_id > public.city.id
+
+Ref: public.ward.district_id > public.district.id
+
+Ref: shops.shop.id - shops.shop_license.shop_id
+
+Ref: commons.rating.id < commons.rating_detail.rating_id
+
+Ref: commons.rating.id - commons.rating_report.rating_id
+
+// Ref: shop_address.city_id - city.id
+
+// Ref: shop_address.ward_id - ward.id
+
+// Ref: shop_address.district_id - district.id
