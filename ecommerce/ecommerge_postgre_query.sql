@@ -1,6 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS users;
 CREATE SCHEMA IF NOT EXISTS shops;
 CREATE SCHEMA IF NOT EXISTS products;
+CREATE SCHEMA IF NOT EXISTS commons;
 
 create table public.city (
 	id SERIAL PRIMARY KEY NOT NULL,
@@ -12,6 +13,7 @@ create table public.city (
 create table public.district (
 	id SERIAL PRIMARY KEY NOT NULL,
 	city_id int NOT NULL,
+	full_address varchar(200),
 	district_name varchar(100) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
@@ -20,6 +22,7 @@ create table public.district (
 create table public.ward (
 	id SERIAL PRIMARY KEY NOT NULL,
 	district_id int NOT NULL,
+	full_address varchar(200),
 	ward_name varchar(100) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
@@ -31,11 +34,12 @@ create table public.category (
 	image_url varchar(100),
 	item_level int,
 	parent_id int,
+	tree_path varchar(50),
 	is_active boolean DEFAULT false,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
-
+comment on column public.category.tree_path is 'path level vd: 1,3,5';
 comment on column public.category.item_level is 'level of category';
 comment on column public.category.parent_id is 'id parent of category';
 
@@ -82,19 +86,55 @@ create table users.user_adress (
 
 
 CREATE TYPE shops.shop_state AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+CREATE TYPE shops.shop_type AS ENUM ('NORMAL', 'FAVORITE', 'MALL');
 
 create table shops.shop (
 	id BIGSERIAL PRIMARY KEY NOT NULL,
 	shop_name varchar(45) NOT NULL,
 	avatar_url varchar(100),
 	cover_url varchar(100),
+	category_id bigint NOT NULL,
+	industry_name varchar(100),
+	type shops.shop_type DEFAULT 'NORMAL',
 	description text,
 	is_locked boolean DEFAULT false,
 	state shops.shop_state DEFAULT 'PENDING',
+	confirmed_at timestamp,
 	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
-comment on column shops.shop.shop.id is 'map 1-1 with userId (1 user - 1 shop)';
+comment on column shops.shop.id is 'map 1-1 with userId (1 user - 1 shop)';
+comment on column shops.shop.category_id is 'id trong bảng danh mục (Id ngành hàng)';
+comment on column shops.shop.industry_name is 'tên ngành hàng của shop';
+comment on column shops.shop.type is 'các loại Shop, mặc định tạo nếu ko có giấy tờ là NORMAL';
+
+
+CREATE TYPE shops.shop_license_state AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+create table shops.shop_license (
+	id BIGSERIAL PRIMARY KEY NOT NULL,
+	shop_id bigint NOT NULL,
+	front_identity_card_url varchar(100),
+	back_identity_card_url varchar(100),
+	owner_name varchar(100) NOT NULL,
+	identity_number varchar(50) NOT NULL,
+	identity_release_date varchar(100) NOT NULL,
+	business_license_url varchar(100),
+	tax_code varchar(50),
+	company_name varchar(100),
+	state shops.shop_license_state DEFAULT 'PENDING',
+	reject_reason text,
+	confirmed_at timestamp,
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+comment on column shops.shop_license.owner_name is 'Tên chủ đăng ký kinh doanh';
+comment on column shops.shop_license.identity_number is 'số CCCD chủ đăng ký';
+comment on column shops.shop_license.identity_release_date is 'ngày cấp CCCD';
+comment on column shops.shop_license.business_license_url is 'giấy phép đăng ký kinh doanh';
+comment on column shops.shop_license.tax_code is 'mã số thuế';
+comment on column shops.shop_license.company_name is 'tên công ty đăng ký kinh doanh';
+comment on column shops.shop_license.reject_reason is 'lý do từ chối (nếu có)';
+
 
 
 CREATE TYPE shops.shop_address_type AS ENUM ('WAREHOUSE', 'STORE');
@@ -137,6 +177,9 @@ comment on column users.payment.bank_name is 'Tên ngân hàng';
 comment on column users.payment.bank_branch_name is 'Chi nhánh ngân hàng';
 comment on column users.payment.state is 'PENDING: chờ xác minh, VERIFIED: đã xác minh';
 comment on column users.payment.is_default is 'TK thanh toán mặc định (1 tài khoản phải có 1 loại thanh toán mặc định)';
+
+
+
 
 
 INSERT INTO public.city (city_name) VALUES

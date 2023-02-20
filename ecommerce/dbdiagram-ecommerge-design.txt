@@ -205,6 +205,8 @@ Table commons.message_config {
 }
 
 
+
+
 // Creating references
 // You can also define relaionship separately
 // > many-to-one; < one-to-many; - one-to-one; <> many-to-many
