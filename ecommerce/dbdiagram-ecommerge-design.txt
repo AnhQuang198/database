@@ -157,7 +157,7 @@ Table commons.rating {
 Table commons.rating_detail {
   id bigint [pk, increment, not null] // auto-increment
   rating_id bigint [not null, note: 'id rating']
-  comment tinytext [note: 'đánh giá chi tiết']
+  comment_content tinytext [note: 'đánh giá chi tiết']
   image_urls tinytext [note: 'danh sách ảnh']
   parent_id int [note: 'id comment của rating_detail cha']
   level int [note: 'cấp của comment']
@@ -197,7 +197,7 @@ Table commons.rating_report {
 //Table Config message (Chứa cấu hình những message mặc định)
 Table commons.message_config {
   id int [pk, increment, not null] // auto-increment
-  message varchar(200) [not null]
+  message_content varchar(200) [not null]
   type ENUM('RATING_REPORT')
   is_active boolean [default: true]
   created_at timestamp

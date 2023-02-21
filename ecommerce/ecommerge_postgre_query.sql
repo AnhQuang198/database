@@ -179,8 +179,76 @@ comment on column users.payment.state is 'PENDING: chờ xác minh, VERIFIED: đ
 comment on column users.payment.is_default is 'TK thanh toán mặc định (1 tài khoản phải có 1 loại thanh toán mặc định)';
 
 
+create table commons.rating (
+	id BIGSERIAL PRIMARY KEY NOT NULL,
+	shop_id bigint NOT NULL,
+	product_id bigint NOT NULL,
+	user_id bigint NOT NULL,
+	rate_star int NOT NULL,
+	is_reported boolean DEFAULT false,
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+comment on column commons.rating.shop_id is 'id của shop chứa sản phẩm';
+comment on column commons.rating.product_id is 'id của sản phẩm được rate';
+comment on column commons.rating.user_id is 'id người dánh giá';
+comment on column commons.rating.rate_star is 'số sao rate cho sản phẩm';
+comment on column commons.rating.is_reported is 'đánh giá bị báo cáo';
 
 
+create table commons.rating_detail (
+	id BIGSERIAL PRIMARY KEY NOT NULL,
+	rating_id bigint NOT NULL,
+	comment_content text,
+	image_urls text,
+	parent_id int,
+	level int,
+	tree_path varchar(50),
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+comment on column commons.rating_detail.rating_id is 'id rating';
+comment on column commons.rating_detail.comment_content is 'đánh giá chi tiết';
+comment on column commons.rating_detail.image_urls is 'danh sách ảnh';
+comment on column commons.rating_detail.parent_id is 'id comment của rating_detail cha';
+
+
+CREATE TYPE commons.rating_report_state AS ENUM ('PENDING', 'VERIFIED');
+create table commons.rating_report (
+	id BIGSERIAL PRIMARY KEY NOT NULL,
+	rating_id bigint NOT NULL,
+	message_config_id int,
+	message_content varchar(200),
+	state commons.rating_report_state DEFAULT 'PENDING',
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+create table commons.rating_total (
+	id BIGSERIAL PRIMARY KEY NOT NULL,
+	shop_id bigint NOT NULL,
+	product_id bigint NOT NULL,
+	rate_star_avg float NOT NULL,
+	total_five_star int DEFAULT 0,
+	total_four_star int DEFAULT 0,
+	total_three_star int DEFAULT 0,
+	total_two_star int DEFAULT 0,
+	total_one_star int DEFAULT 0,
+	total_comment int DEFAULT 0,
+	total_comment_with_img int DEFAULT 0,
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TYPE commons.message_config_type AS ENUM ('RATING_REPORT');
+create table commons.message_config (
+	id SERIAL PRIMARY KEY NOT NULL,
+	message_content varchar(200) NOT NULL,
+	type commons.message_config_type,
+	is_active boolean DEFAULT true,
+	created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
 
 INSERT INTO public.city (city_name) VALUES
 ('An Giang'),
