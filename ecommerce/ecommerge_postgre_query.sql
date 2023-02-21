@@ -13,8 +13,8 @@ create table public.city (
 create table public.district (
 	id SERIAL PRIMARY KEY NOT NULL,
 	city_id int NOT NULL,
-	full_address varchar(200),
 	district_name varchar(100) NOT NULL,
+	full_address varchar(200),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
@@ -22,8 +22,8 @@ create table public.district (
 create table public.ward (
 	id SERIAL PRIMARY KEY NOT NULL,
 	district_id int NOT NULL,
-	full_address varchar(200),
 	ward_name varchar(100) NOT NULL,
+	full_address varchar(200),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
