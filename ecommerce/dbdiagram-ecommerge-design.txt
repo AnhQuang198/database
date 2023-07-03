@@ -204,8 +204,35 @@ Table commons.message_config {
   updated_at timestamp
 }
 
+//Table Config event (Chứa cấu hình những event đang chạy)
+Table commons.event {
+  id int [pk, increment, not null] // auto-increment
+  event_name varchar(45) [not null, note: 'Tên sự kiện']
+  start_time timestamp [note: 'Thời gian bắt đầu sự kiện']
+  end_time timestamp [note: 'Thời gian kết thúc sự kiện']
+  description largetext [note: 'Mô tả chi tiết sự kiện']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
 
+//Table Lưu tất cả ảnh banner của hệ thống
+Table commons.banner {
+  id int [pk, increment, not null] // auto-increment'
+  event_id int [note: 'Id của event']
+  image_url varchar(100) [note: 'ảnh của sự kiện']
+  position int [note: 'vị trí hiển thị']
+  type ENUM('EVENT', 'HEADER', 'FOOTER')
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
 
+Table commons.voucher {
+  id int [pk, increment, not null] // auto-increment'
+  name varchar(100)
+  
+}
 
 // Creating references
 // You can also define relaionship separately
@@ -229,6 +256,8 @@ Ref: shops.shop.id - shops.shop_license.shop_id
 Ref: commons.rating.id < commons.rating_detail.rating_id
 
 Ref: commons.rating.id - commons.rating_report.rating_id
+
+Ref: commons.event.id < commons.banner.event_id
 
 // Ref: shop_address.city_id - city.id
 
