@@ -146,8 +146,8 @@ Table commons.rating_report {
 Table commons.item_config {
   id int [pk, increment, not null] // auto-increment
   item_name varchar(200)
+  item_code varchar(200)
   item_value varchar(200)
-  type ENUM('RATING_REPORT')
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
@@ -177,6 +177,58 @@ Table commons.banner {
   updated_at timestamp
 }
 
+//Table lưu voucher
+Table commons.voucher {
+  id int [pk, increment, not null] // auto-increment'
+  name varchar(100) [not null, note: 'Tên voucher']
+  code varchar(100) [not null, note: 'Mã code để nhập vào']
+  description largetext [note: 'Mô tả chi tiết voucher']
+  image_url varchar(100) [note: 'ảnh của sự kiện']
+  price_discount double [note: 'giá tiền đc giảm']
+  percent_discount int [note: '% tiền đc giảm']
+  price_min_condition double [note: 'giá tối thiểu để sử dụng voucher']
+  price_max_condition double [note: 'giá tối đa để sử dụng voucher']
+  quantity int [not null, note: 'số lượng voucher']
+  event_id int [note: 'id của sự kiện']
+  type ENUM('EVENT', 'NORMAL', 'DELIVERY', 'SPECIAL')
+  start_time timestamp [not null, note: 'thời gian bắt đầu có thể dùng (nếu voucher theo sự kiện thì sẽ mặc định bằng thời gian bắt đầu sự kiện)']
+  end_time timestamp [not null, note: 'thời gian kết thúc có thể dùng (nếu voucher theo sự kiện thì sẽ mặc định bằng thời gian kết thúc sự kiện)']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table lưu voucher log
+Table commons.voucher_log {
+  id bigint [pk, increment, not null] // auto-increment'
+  voucher_id int [not null, note: 'id của voucher']
+  voucher_name varchar(100) [not null, note: 'Tên voucher']
+  voucher_code varchar(100) [not null, note: 'Mã code để nhập vào']
+  user_id bigint [not null, note: 'id người sử dụng voucher']
+  order_id bigint [not null, note: 'đơn hàng sử dụng voucher']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table lưu thông tin sản phẩm
+Table products.product {
+  id bigint [pk, increment, not null] // auto-increment'
+  category_id bigint [not null, note: 'Danh mục của sản phẩm']
+  name varchar(100) [not null, note: 'Tên sản phẩm']
+  code varchar(100) [not null, note: 'Mã sản phẩm']
+  image_urls tinytext [note: 'danh sách ảnh sản phẩm (tối đa 3 ảnh)']
+  tags int [note: 'lưu item_config_id với các tag được cấu hình trước']
+  brand int [note: 'lưu item_config_id với các brand được cấu hình trước']
+  weight float [note: 'cân nặng (sử dụng khi vận chuyển)']
+  width float [note: 'chiều rộng (sử dụng khi vận chuyển)']
+  height float [note: 'chiều cao (sử dụng khi vận chuyển)']
+  length float [note: 'chiều dài (sử dụng khi vận chuyển)']
+  description largetext [note: 'mô tả sản phẩm (lưu dạng html)']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
 // Creating references
 // You can also define relaionship separately
 // > many-to-one; < one-to-many; - one-to-one; <> many-to-many
@@ -194,3 +246,7 @@ Ref: commons.rating.id < commons.rating_detail.rating_id
 Ref: commons.rating.id - commons.rating_report.rating_id
 
 Ref: commons.event.id < commons.banner.event_id
+
+Ref: commons.voucher.id < commons.voucher_log.voucher_id
+
+Ref: products.product.category_id > public.category.id
