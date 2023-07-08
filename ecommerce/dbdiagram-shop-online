@@ -1,4 +1,4 @@
-//schema public, users, shops, products, commons
+//schema public, users, shops, products, commons, orders
 
 //Table City
 Table public.city {
@@ -48,13 +48,14 @@ Table users.user {
   email varchar(50) [not null, unique]
   password_crypt varchar(100)
   state ENUM('ACTIVE', 'NOT_ACTIVE') [default: 'NOT_ACTIVE', note: 'status of user']
-  role ENUM('ADMIN', 'MEMBER', 'SELLER') [default: 'MEMBER']
+  role ENUM('ADMIN', 'MEMBER', 'STAFF', 'MANAGER') [default: 'MEMBER']
   is_locked boolean [default: false]
   provider ENUM('LOCAL', 'GOOGLE', 'FACEBOOK', 'GITHUB') [default: 'LOCAL', note: 'user login oauth or local']
   name varchar(45)
   gender tinyint(1)
   dob varchar(45) [note: 'date of birth']
   avatar_url varchar(100)
+  confirmed_by varchar(45) [note: 'với role MEMBER thì mặc định là SYSTEM, với các role còn lại thì lưu name của người duyệt']
   confirmed_at timestamp
   created_at timestamp
   updated_at timestamp
@@ -142,12 +143,28 @@ Table commons.rating_report {
   updated_at timestamp
 }
 
+//Table Config common system
+Table commons.config {
+  id bigint [pk, increment, not null] // auto-increment
+  config_name varchar(200) [not null, note: 'Tên cấu hình']
+  config_code varchar(200) [not null, note: 'Code của cấu hình']
+  config_parent_id bigint [note: 'id danh mục cha']
+  tree_path varchar(50) [note: 'path level vd: 1,3,5']
+  is_active boolean [default: true]
+  description varchar(500)
+  created_at timestamp
+  updated_at timestamp
+}
+
 //Table Config message (Chứa cấu hình những message mặc định)
 Table commons.item_config {
-  id int [pk, increment, not null] // auto-increment
+  id bigint [pk, increment, not null] // auto-increment
+  config_id bigint [not null, note: 'Lưu id cấu hình']
   item_name varchar(200)
   item_code varchar(200)
   item_value varchar(200)
+  tree_path varchar(50) [note: 'path level vd: 1,3,5']
+  item_parent_id bigint
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
@@ -163,6 +180,8 @@ Table commons.event {
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
 }
 
 //Table Lưu tất cả ảnh banner của hệ thống
@@ -175,6 +194,8 @@ Table commons.banner {
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
 }
 
 //Table lưu voucher
@@ -196,6 +217,8 @@ Table commons.voucher {
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
 }
 
 //Table lưu voucher log
@@ -219,15 +242,51 @@ Table products.product {
   image_urls tinytext [note: 'danh sách ảnh sản phẩm (tối đa 3 ảnh)']
   tags int [note: 'lưu item_config_id với các tag được cấu hình trước']
   brand int [note: 'lưu item_config_id với các brand được cấu hình trước']
-  weight float [note: 'cân nặng (sử dụng khi vận chuyển)']
-  width float [note: 'chiều rộng (sử dụng khi vận chuyển)']
-  height float [note: 'chiều cao (sử dụng khi vận chuyển)']
-  length float [note: 'chiều dài (sử dụng khi vận chuyển)']
+  original_price double [not null, note: 'giá gốc của sản phẩm']
+  variants varchar(50) [note: 'lưu id trong bảng commons.config (id của phân loại ở dạng id1, id2)']
   description largetext [note: 'mô tả sản phẩm (lưu dạng html)']
   is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
 }
+
+//Table lưu phân loại sản phẩm
+Table products.product_variant {
+  id bigint [pk, increment, not null] // auto-increment'
+  product_id bigint [not null, note: 'id sản phẩm']
+  image_url varchar(100) [note: 'lưu ảnh của phân loại sản phẩm']
+  weight float [note: 'cân nặng (sử dụng khi vận chuyển)']
+  width float [note: 'chiều rộng (sử dụng khi vận chuyển)']
+  height float [note: 'chiều cao (sử dụng khi vận chuyển)']
+  length float [note: 'chiều dài (sử dụng khi vận chuyển)']
+  first_attribute_id bigint [note: 'lưu id phân loại thứ 1 được cấu hình trong bảng commons.config']
+  first_attribute_value_id bigint [note: 'lưu id phân loại thứ 1 được cấu hình trong bảng commons.item_config']
+  second_attribute_id bigint [note: 'lưu id phân loại thứ 2 được cấu hình trong bảng commons.config']
+  second_attribute_value_id bigint [note: 'lưu id phân loại thứ 2 được cấu hình trong bảng commons.item_config']
+  quantity double [not null, note: 'số lượng sản phẩm còn trong kho']
+  sale_price double [not null, note: 'giá bán ra của sản phẩm theo phâm loại']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
+}
+
+//Table lưu log cập nhật của bảng sản phẩm
+Table products.product_log {
+  id bigint [pk, increment, not null] // auto-increment'
+  product_id bigint [not null, note: 'id sản phẩm']
+  total_rate bigint [default: 0, note: 'số lượng đánh giá (chạy schedule tổng hợp)']
+  total_sold bigint [default: 0, note: 'số lượng đã bán (đơn hàng ở trạng thái hoàn thành) (chạy schedule tổng hợp)']
+  avg_rate_star float [default: 0.0, note: 'số sao đánh giá trung bình (chạy schedule tổng hợp)']
+  log largetext [note: 'lưu log cập nhật sản phẩm trong 30 ngày']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table order, order_log, shipping, shipping_log
 
 // Creating references
 // You can also define relaionship separately
@@ -250,3 +309,7 @@ Ref: commons.event.id < commons.banner.event_id
 Ref: commons.voucher.id < commons.voucher_log.voucher_id
 
 Ref: products.product.category_id > public.category.id
+
+Ref: products.product.id < products.product_variant.product_id
+
+Ref: products.product.id - products.product_log.product_id
