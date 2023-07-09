@@ -1,4 +1,4 @@
-//schema public, users, shops, products, commons, orders
+//schema public, users, products, commons, orders
 
 //Table City
 Table public.city {
@@ -286,7 +286,46 @@ Table products.product_log {
   updated_at timestamp
 }
 
-//Table order, order_log, shipping, shipping_log
+//Table lưu thông tin đơn hàng
+Table orders.order {
+  id bigint [pk, increment, not null] // auto-increment'
+  user_id bigint [not null, note: 'id người mua hàng']
+  detail_items json [not null, note: 'lưu chi tiết sản phẩm của đơn hàng, vd: [{id: 1, name: Áo mưa, code: 123, image_url: ..., original_price: 10000, sale_price: 8000, quantity: 1}]']
+  detail_discount json [not null, note: 'lưu chi tiết khuyến mãi đã sử dụng cho đơn hàng này']
+  total_item int [not null, note: 'lưu số lượng sản phẩm của đơn hàng']
+  total_amount_original double [not null, note: 'tổng tiền của đơn hàng']
+  total_amount_discount double [not null, note: 'tổng tiền đã được trừ khuyến mãi']
+  total_amount_paid double [not null, note: 'tổng tiền user thanh toán']
+  status ENUM('WAITING_FOR_CONFIRM', 'CONFIRMED', 'DELIVERY', 'WAITING_FOR_REVIEW', 'FINISH', 'CANCEL', 'RETURN')
+  payment_status ENUM('PAID', 'UNPAID')
+  payment_at timestamp [note: 'thời gian thanh toán đơn hàng']
+  confirmed_at timestamp [note: 'thời gian xác nhận đơn từ trạng thái WAITING_FOR_CONFIRM -> CONFIRMED đối với những đơn hàng chưa thành toán (UNPAID)']
+  confirmed_by varchar(45) [note: 'lưu name trong bảng user']
+  delivery_at timestamp [note: 'thời gian giao hàng cho bên vận chuyển']
+  finish_at timestamp [note: 'thời gian hoàn thành đơn hàng']
+  cancel_at timestamp [note: 'thời gian xác nhận huỷ đơn hàng (chỉ huỷ được khi đơn đang ở 2 trạng thái (WAITING_FOR_CONFIRM, CONFIRMED) -> CANCEL']
+  cancel_by varchar(45) [note: 'lưu name trong bảng user, nếu người dùng huỷ thì mặc định là CUSTOMER']
+  cancel_reason varchar(500) [note: 'lưu giá trị được cấu hình sẵn cho lý do huỷ bỏ trong bảng commons.config']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table lưu thông tin đơn hàng ở trạng thái trả hàng
+Table orders.order_return {
+  id bigint [pk, increment, not null] // auto-increment'
+  order_id bigint [not null, note: 'id chi tiết đơn hàng trả lại']
+  image_urls tinytext [note: 'danh sách ảnh sản phẩm (tối đa 5 ảnh)']
+  return_type ENUM('RENEW', 'REFUND') [not null, note:'loại trả hàng Đổi mới - Hoàn tiền']
+  return_reason varchar(500) [note: 'lưu giá trị được cấu hình sẵn cho lý do huỷ bỏ trong bảng commons.config']
+  return_reason_detail tinytext [note: 'chi tiết lý do trả hàng']
+  status ENUM('WAITING_FOR_CONFIRM', 'CONFIRMED')
+  confirmed_at timestamp [note: 'thời gian xác nhận đơn từ trạng thái WAITING_FOR_CONFIRM -> CONFIRMED']
+  confirmed_by varchar(45) [note: 'lưu name trong bảng user']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table order_history, shipping, shipping_log, loyalty
 
 // Creating references
 // You can also define relaionship separately
