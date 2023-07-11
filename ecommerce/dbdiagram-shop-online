@@ -71,8 +71,10 @@ Table users.user_adress {
   district_id int [not null]
   ward_id int [not null]
   add_detail varchar(300)
-  type ENUM('OFFICE', 'HOME') [default: 'HOME']
+  type ENUM('OFFICE', 'HOME', 'PICKUP') [default: 'HOME']
   is_default boolean [default: false]
+  is_shop_address boolean [default: false, not null, note: 'Địa chỉ của shop chỉ được tạo bởi role ADMIN']
+  is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
 }
@@ -319,18 +321,59 @@ Table orders.order_return {
   return_reason varchar(500) [note: 'lưu giá trị được cấu hình sẵn cho lý do huỷ bỏ trong bảng commons.config']
   return_reason_detail tinytext [note: 'chi tiết lý do trả hàng']
   status ENUM('WAITING_FOR_CONFIRM', 'CONFIRMED')
+  total_amount_refund double [note: 'Số tiền hoàn lại nếu ở trạng thái REFUND']
+  refund_status ENUM('WAITING', 'NOTREFUND', 'REFUNDED') [note: 'Trạng thái hoàn tiền']
+  reason_not_refund varchar(500) [note: 'Lý do không hoàn tiền cho đơn hàng khi đã được xác nhận']
   confirmed_at timestamp [note: 'thời gian xác nhận đơn từ trạng thái WAITING_FOR_CONFIRM -> CONFIRMED']
   confirmed_by varchar(45) [note: 'lưu name trong bảng user']
   created_at timestamp
   updated_at timestamp
 }
 
-//Table order_history, shipping, shipping_log, loyalty
+//Table lưu log của đơn hàng
+Table orders.order_log {
+  id bigint [pk, increment, not null] // auto-increment'
+  order_id bigint [not null, note: 'Id đơn hàng']
+  old_status ENUM('WAITING_FOR_CONFIRM', 'CONFIRMED', 'DELIVERY', 'WAITING_FOR_REVIEW', 'FINISH', 'CANCEL', 'RETURN') [note: 'Trạng thái trước của đơn hàng']
+  new_status ENUM('CONFIRMED', 'DELIVERY', 'WAITING_FOR_REVIEW', 'FINISH', 'CANCEL', 'RETURN') [note: 'Trạng thái trước của đơn hàng']
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
+  log largetext [note: 'lưu log cập nhật đơn hàng trong 30 ngày']
+  created_at timestamp
+  updated_at timestamp
+}
+
+//Table lưu thông tin vận chuyển của đơn hàng
+Table orders.shipping {
+  id bigint [pk, increment, not null] // auto-increment'
+  order_id bigint [not null, note: 'Id đơn hàng']
+  log largetext [note: 'lưu log cập nhật trạng thái vận chuyển']
+  delivery_unit ENUM('GHTK', 'JvT', 'GHN', 'VTPOST') [not null, note: 'Đơn vị vận chuyển']
+  status_delivery_unit varchar(500) [note: 'Trạng thái của bên ĐVVC (cập nhật qua schedule)']
+  status varchar(500) [not null, note: 'Trạng thái được cấu hình trên hệ thống']
+  total_item int [note: 'Số sản phẩm gửi bên ĐVVC']
+  total_weight float [not null, note: 'Tổng trọng lượng đơn hàng vận chuyển']
+  pick_address varchar(500) [note: 'địa chỉ chi tiết (số nhà..., ngõ ngách) lấy hàng']
+  pick_province int [not null, note: 'id tỉnh của địa chỉ lấy hàng']
+  pick_district int [not null, note: 'id quận/huyện của địa chỉ lấy hàng']
+  pick_ward int [not null, note: 'id phường/xã của địa chỉ lấy hàng']
+  pick_tel varchar(20) [not null, note: 'Số điện thoại lấy hàng']
+  destination_address varchar(500) [note: 'địa chỉ chi tiết (số nhà..., ngõ ngách) nhận hàng']
+  destination_province int [not null, note: 'id tỉnh của địa chỉ giao hàng']
+  destination_district int [not null, note: 'id quận/huyện của địa chỉ giao hàng']
+  destination_ward int [not null, note: 'id phường/xã của địa chỉ giao hàng']
+  destination_tel varchar(20) [not null, note: 'Số điện thoại nhận hàng']
+  fee double [not null, note: 'Phí vận chuyển']
+  tags int [note: 'lưu item_config_id với các tag được cấu hình trước']
+  create_by varchar(45) [note: 'lưu name trong bảng user']
+  updated_by varchar(45) [note: 'lưu name trong bảng user']
+  created_at timestamp
+  updated_at timestamp
+}
 
 // Creating references
 // You can also define relaionship separately
 // > many-to-one; < one-to-many; - one-to-one; <> many-to-many
-
 Ref: users.payment.object_id > users.user.id
 
 Ref: users.user_adress.user_id > users.user.id 
